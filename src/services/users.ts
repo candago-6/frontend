@@ -17,8 +17,8 @@ export interface UpdateUserPayload {
 const MOCK = process.env.NEXT_PUBLIC_MOCK_AUTH === "true";
 
 let mockUsers: User[] = [
-  { id: "1", name: "Ana Souza", email: "ana.souza@procon.sp.gov.br", role: "gestor_gerencia" },
-  { id: "2", name: "Bruno Lima", email: "bruno.lima@procon.sp.gov.br", role: "gestor_analista" },
+  { id: "1", name: "Ana Souza", email: "ana.souza@procon.sp.gov.br", role: "gestor" },
+  { id: "2", name: "Bruno Lima", email: "bruno.lima@procon.sp.gov.br", role: "analista" },
   { id: "3", name: "Carla Mendes", email: "carla.mendes@procon.sp.gov.br", role: "analista" },
 ];
 

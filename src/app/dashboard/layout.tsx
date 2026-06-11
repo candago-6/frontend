@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Scale, LayoutDashboard, Users, LogOut, MessageSquare, Menu, X } from "lucide-react";
@@ -9,9 +9,9 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/auth";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/dashboard/usuarios", label: "Usuários", icon: Users, exact: false },
-  { href: "/dashboard/conversas", label: "Conversas", icon: MessageSquare, exact: false },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true, roles: ["gestor", "analista"] },
+  { href: "/dashboard/usuarios", label: "Usuários", icon: Users, exact: false, roles: ["gestor"] },
+  { href: "/dashboard/conversas", label: "Conversas", icon: MessageSquare, exact: false, roles: ["gestor", "analista"] },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -20,6 +20,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    if (user?.role === "analista" && pathname.startsWith("/dashboard/usuarios")) {
+      router.replace("/dashboard");
+    }
+  }, [user?.role, pathname, router]);
 
   function handleLogout() {
     logout();
@@ -64,7 +70,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         <nav className="flex-1 space-y-0.5 px-3 py-4">
-          {NAV_ITEMS.map(({ href, label, icon: Icon, exact }) => {
+          {NAV_ITEMS.filter((item) => !user?.role || item.roles.includes(user.role)).map(({ href, label, icon: Icon, exact }) => {
             const active = exact ? pathname === href : pathname.startsWith(href);
             return (
               <Link
