@@ -48,6 +48,12 @@ const STATUS_BADGE_CLASS: Record<string, string> = {
   archived: "bg-slate-100 text-slate-600 border-slate-200",
 };
 
+function maskCpf(cpf: string): string {
+  const digits = cpf.replace(/\D/g, "");
+  if (digits.length !== 11) return cpf;
+  return `***.***.${digits.slice(6, 9)}-${digits.slice(9)}`;
+}
+
 function formatDate(value: string): string {
   return new Date(value).toLocaleString("pt-BR", {
     day: "2-digit",
@@ -95,7 +101,7 @@ function ConversationHistoryDialog({
           <DialogTitle>{conversation?.protocol}</DialogTitle>
           <DialogDescription>
             {conversation?.clientName} · {conversation?.clientPhone}
-            {conversation?.clientCpf ? ` · CPF ${conversation.clientCpf}` : ""}
+            {conversation?.clientCpf ? ` · CPF ${maskCpf(conversation.clientCpf)}` : ""}
           </DialogDescription>
         </DialogHeader>
 
