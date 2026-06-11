@@ -5,9 +5,14 @@ import { Bot, CheckCircle2, MessageSquareMore, Smile } from "lucide-react";
 
 import { EvaluationsTable } from "@/components/dashboard/evaluations-table";
 import { StatCard } from "@/components/dashboard/stat-card";
+import { TrendChart } from "@/components/dashboard/trend-chart";
 import { getAttendances } from "@/services/atendimentos";
-import { getFeedbacks, getSatisfactionPercentage } from "@/services/feedback";
-import { getMessageEvaluations, getPositiveRatePercentage } from "@/services/messageEvaluations";
+import { getFeedbacks, getSatisfactionPercentage, getSatisfactionTrend } from "@/services/feedback";
+import {
+  getMessageEvaluations,
+  getPositiveRatePercentage,
+  getPositiveRateTrend,
+} from "@/services/messageEvaluations";
 
 const REFRESH_INTERVAL_MS = 10_000;
 
@@ -34,6 +39,8 @@ export default function DashboardPage() {
   const closedCount = attendances.filter((a) => a.status === "closed").length;
   const satisfaction = getSatisfactionPercentage(feedbacks);
   const llmAccuracy = getPositiveRatePercentage(evaluations);
+  const satisfactionTrend = getSatisfactionTrend(feedbacks);
+  const accuracyTrend = getPositiveRateTrend(evaluations);
 
   return (
     <div className="p-4 sm:p-8">
@@ -67,6 +74,16 @@ export default function DashboardPage() {
           icon={Bot}
           isLoading={isLoadingEvaluations}
         />
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-lg font-semibold text-slate-900">Tendência</h2>
+        <p className="mt-0.5 text-sm text-slate-500">
+          Evolução diária da satisfação dos clientes e da acurácia das respostas da LLM
+        </p>
+        <div className="mt-4">
+          <TrendChart satisfaction={satisfactionTrend} accuracy={accuracyTrend} />
+        </div>
       </div>
 
       <div className="mt-8">

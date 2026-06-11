@@ -22,3 +22,8 @@ export interface ConversationEvaluation {
   rating: "positive" | "negative";
   evaluatedAt: string;
 }
+
+export interface TrendPoint {
+  date: string;
+  value: number;
+}

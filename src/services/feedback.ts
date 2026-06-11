@@ -1,4 +1,5 @@
 import api from "./api";
+import type { TrendPoint } from "@/types";
 
 const MOCK = process.env.NEXT_PUBLIC_MOCK_AUTH === "true";
 
@@ -32,6 +33,20 @@ export function getSatisfactionPercentage(feedbacks: FeedbackDTO[]): number | nu
   const sum = feedbacks.reduce((total, f) => total + f.rating, 0);
   const average = sum / feedbacks.length;
   return Math.round((average / 5) * 100);
+}
+
+export function getSatisfactionTrend(feedbacks: FeedbackDTO[]): TrendPoint[] {
+  const byDate = new Map<string, { sum: number; count: number }>();
+  for (const f of feedbacks) {
+    const date = f.created_at.slice(0, 10);
+    const entry = byDate.get(date) ?? { sum: 0, count: 0 };
+    entry.sum += f.rating;
+    entry.count += 1;
+    byDate.set(date, entry);
+  }
+  return Array.from(byDate.entries())
+    .map(([date, { sum, count }]) => ({ date, value: Math.round((sum / count / 5) * 100) }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 export type EvaluationLabel = "positive" | "negative";
