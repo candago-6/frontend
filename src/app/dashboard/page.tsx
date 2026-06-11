@@ -1,10 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, MessageSquareMore } from "lucide-react";
+import { CheckCircle2, MessageSquareMore, Smile } from "lucide-react";
 
 import { StatCard } from "@/components/dashboard/stat-card";
 import { getAttendances } from "@/services/atendimentos";
+import { getFeedbacks, getSatisfactionPercentage } from "@/services/feedback";
 
 const REFRESH_INTERVAL_MS = 10_000;
 
@@ -15,8 +16,15 @@ export default function DashboardPage() {
     refetchInterval: REFRESH_INTERVAL_MS,
   });
 
+  const { data: feedbacks = [], isLoading: isLoadingFeedbacks } = useQuery({
+    queryKey: ["feedbacks"],
+    queryFn: getFeedbacks,
+    refetchInterval: REFRESH_INTERVAL_MS,
+  });
+
   const openCount = attendances.filter((a) => a.status === "open").length;
   const closedCount = attendances.filter((a) => a.status === "closed").length;
+  const satisfaction = getSatisfactionPercentage(feedbacks);
 
   return (
     <div className="p-8">
@@ -37,6 +45,12 @@ export default function DashboardPage() {
           value={String(closedCount)}
           icon={CheckCircle2}
           isLoading={isLoading}
+        />
+        <StatCard
+          label="Satisfação dos clientes"
+          value={satisfaction === null ? "—" : `${satisfaction}%`}
+          icon={Smile}
+          isLoading={isLoadingFeedbacks}
         />
       </div>
     </div>
