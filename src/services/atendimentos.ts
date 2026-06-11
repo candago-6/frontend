@@ -26,6 +26,7 @@ function delay<T>(value: T): Promise<T> {
 function toAttendance(conversation: ConversationDTO): Attendance {
   return {
     id: String(conversation.id),
+    protocol: conversation.protocol,
     status: conversation.status === "open" ? "open" : "closed",
     createdAt: conversation.created_at,
   };

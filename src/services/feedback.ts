@@ -33,3 +33,11 @@ export function getSatisfactionPercentage(feedbacks: FeedbackDTO[]): number | nu
   const average = sum / feedbacks.length;
   return Math.round((average / 5) * 100);
 }
+
+export type EvaluationLabel = "positive" | "negative";
+
+export function getEvaluationLabel(feedback: FeedbackDTO): EvaluationLabel {
+  return feedback.rating >= 4 ? "positive" : "negative";
+}
+
+export type { FeedbackDTO };

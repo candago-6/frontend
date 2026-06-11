@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, MessageSquareMore, Smile } from "lucide-react";
 
+import { EvaluationsTable } from "@/components/dashboard/evaluations-table";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { getAttendances } from "@/services/atendimentos";
 import { getFeedbacks, getSatisfactionPercentage } from "@/services/feedback";
@@ -27,7 +28,7 @@ export default function DashboardPage() {
   const satisfaction = getSatisfactionPercentage(feedbacks);
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-slate-900">Acompanhamento</h1>
         <p className="mt-0.5 text-sm text-slate-500">Visão geral dos atendimentos da plataforma</p>
@@ -52,6 +53,20 @@ export default function DashboardPage() {
           icon={Smile}
           isLoading={isLoadingFeedbacks}
         />
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-lg font-semibold text-slate-900">Avaliação de conversas</h2>
+        <p className="mt-0.5 text-sm text-slate-500">
+          Desempenho do chatbot avaliado pelos clientes em cada atendimento
+        </p>
+        <div className="mt-4">
+          <EvaluationsTable
+            attendances={attendances}
+            feedbacks={feedbacks}
+            isLoading={isLoadingFeedbacks}
+          />
+        </div>
       </div>
     </div>
   );

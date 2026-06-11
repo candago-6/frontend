@@ -9,6 +9,7 @@ export interface User {
 
 export interface Attendance {
   id: string;
+  protocol: string;
   status: "open" | "closed";
   createdAt: string;
   closedAt?: string;
