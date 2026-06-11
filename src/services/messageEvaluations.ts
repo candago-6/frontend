@@ -1,0 +1,46 @@
+import api from "./api";
+
+const MOCK = process.env.NEXT_PUBLIC_MOCK_AUTH === "true";
+
+export type EvaluationRating = "positive" | "negative";
+
+export interface MessageEvaluation {
+  id: number;
+  message_id: number;
+  admin_user_id: string;
+  rating: EvaluationRating;
+  created_at: string;
+}
+
+let mockEvaluations: MessageEvaluation[] = [];
+
+function delay<T>(value: T): Promise<T> {
+  return new Promise((resolve) => setTimeout(() => resolve(value), 300));
+}
+
+export async function getMessageEvaluations(): Promise<MessageEvaluation[]> {
+  if (MOCK) return delay([...mockEvaluations]);
+  const { data } = await api.get<MessageEvaluation[]>("/api/v1/message-evaluations");
+  return data;
+}
+
+export async function evaluateMessage(messageId: number, rating: EvaluationRating): Promise<MessageEvaluation> {
+  if (MOCK) {
+    const existing = mockEvaluations.find((e) => e.message_id === messageId);
+    if (existing) {
+      existing.rating = rating;
+      return delay(existing);
+    }
+    const evaluation: MessageEvaluation = {
+      id: Date.now(),
+      message_id: messageId,
+      admin_user_id: "1",
+      rating,
+      created_at: new Date().toISOString(),
+    };
+    mockEvaluations = [...mockEvaluations, evaluation];
+    return delay(evaluation);
+  }
+  const { data } = await api.put<MessageEvaluation>(`/api/v1/messages/${messageId}/evaluation`, { rating });
+  return data;
+}

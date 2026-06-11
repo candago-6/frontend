@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Loader2, MessageSquareText } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Loader2, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,12 @@ import {
   getConversationMessages,
   type ConversationSummary,
 } from "@/services/conversas";
+import {
+  getMessageEvaluations,
+  evaluateMessage,
+  type EvaluationRating,
+} from "@/services/messageEvaluations";
+import { cn } from "@/lib/utils";
 
 const REFRESH_INTERVAL_MS = 10_000;
 
@@ -58,10 +65,27 @@ function ConversationHistoryDialog({
   conversation: ConversationSummary | null;
   onOpenChange: (v: boolean) => void;
 }) {
+  const queryClient = useQueryClient();
+
   const { data: messages = [], isLoading } = useQuery({
     queryKey: ["conversation-messages", conversation?.id],
     queryFn: () => getConversationMessages(conversation!.id),
     enabled: !!conversation,
+  });
+
+  const { data: evaluations = [] } = useQuery({
+    queryKey: ["message-evaluations"],
+    queryFn: getMessageEvaluations,
+    enabled: !!conversation,
+  });
+
+  const evaluateMutation = useMutation({
+    mutationFn: ({ messageId, rating }: { messageId: number; rating: EvaluationRating }) =>
+      evaluateMessage(messageId, rating),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["message-evaluations"] });
+    },
+    onError: () => toast.error("Erro ao registrar avaliação"),
   });
 
   return (
@@ -87,6 +111,8 @@ function ConversationHistoryDialog({
           <div className="max-h-96 space-y-2 overflow-y-auto py-2">
             {messages.map((message) => {
               const isUser = message.role === "user";
+              const isBot = message.role === "bot";
+              const evaluation = evaluations.find((e) => e.message_id === message.id);
               return (
                 <div key={message.id} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
                   <div
@@ -95,9 +121,41 @@ function ConversationHistoryDialog({
                     }`}
                   >
                     <p>{message.content}</p>
-                    <p className={`mt-1 text-[11px] ${isUser ? "text-slate-300" : "text-slate-400"}`}>
-                      {formatDate(message.timestamp)}
-                    </p>
+                    <div className="mt-1 flex items-center justify-between gap-2">
+                      <p className={`text-[11px] ${isUser ? "text-slate-300" : "text-slate-400"}`}>
+                        {formatDate(message.timestamp)}
+                      </p>
+                      {isBot && (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            disabled={evaluateMutation.isPending}
+                            onClick={() => evaluateMutation.mutate({ messageId: message.id, rating: "positive" })}
+                            className={cn(
+                              "h-6 w-6 text-slate-400 hover:text-green-600",
+                              evaluation?.rating === "positive" && "text-green-600"
+                            )}
+                          >
+                            <ThumbsUp className="h-3.5 w-3.5" />
+                            <span className="sr-only">Avaliar como positiva</span>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            disabled={evaluateMutation.isPending}
+                            onClick={() => evaluateMutation.mutate({ messageId: message.id, rating: "negative" })}
+                            className={cn(
+                              "h-6 w-6 text-slate-400 hover:text-red-600",
+                              evaluation?.rating === "negative" && "text-red-600"
+                            )}
+                          >
+                            <ThumbsDown className="h-3.5 w-3.5" />
+                            <span className="sr-only">Avaliar como negativa</span>
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
