@@ -1,9 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Scale, LayoutDashboard, Users, LogOut, MessageSquare } from "lucide-react";
+import { Scale, LayoutDashboard, Users, LogOut, MessageSquare, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/auth";
@@ -19,6 +19,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   function handleLogout() {
     logout();
@@ -28,15 +29,38 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex h-screen bg-slate-50">
-      <aside className="flex w-60 shrink-0 flex-col border-r border-slate-200 bg-white">
-        <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-[1.125rem]">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white">
-            <Scale className="h-4 w-4" />
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-black/30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-30 flex w-60 shrink-0 -translate-x-full flex-col border-r border-slate-200 bg-white transition-transform md:static md:translate-x-0",
+          sidebarOpen && "translate-x-0"
+        )}
+      >
+        <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-[1.125rem]">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white">
+              <Scale className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold leading-none text-slate-900">Procon Jacareí</p>
+              <p className="mt-0.5 text-xs text-slate-500">Painel de gestão</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-semibold leading-none text-slate-900">Procon Jacareí</p>
-            <p className="mt-0.5 text-xs text-slate-500">Painel de gestão</p>
-          </div>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setSidebarOpen(false)}
+            className="text-slate-400 hover:bg-slate-100 hover:text-slate-600 md:hidden"
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Fechar menu</span>
+          </Button>
         </div>
 
         <nav className="flex-1 space-y-0.5 px-3 py-4">
@@ -46,6 +70,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Link
                 key={href}
                 href={href}
+                onClick={() => setSidebarOpen(false)}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
                   active
@@ -82,7 +107,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      <main className="flex-1 overflow-auto">{children}</main>
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <header className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 md:hidden">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setSidebarOpen(true)}
+            className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+          >
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Abrir menu</span>
+          </Button>
+          <p className="text-sm font-semibold text-slate-900">Procon Jacareí</p>
+        </header>
+
+        <main className="flex-1 overflow-auto">{children}</main>
+      </div>
     </div>
   );
 }
