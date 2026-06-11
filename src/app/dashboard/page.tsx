@@ -1,12 +1,13 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, MessageSquareMore, Smile } from "lucide-react";
+import { Bot, CheckCircle2, MessageSquareMore, Smile } from "lucide-react";
 
 import { EvaluationsTable } from "@/components/dashboard/evaluations-table";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { getAttendances } from "@/services/atendimentos";
 import { getFeedbacks, getSatisfactionPercentage } from "@/services/feedback";
+import { getMessageEvaluations, getPositiveRatePercentage } from "@/services/messageEvaluations";
 
 const REFRESH_INTERVAL_MS = 10_000;
 
@@ -23,9 +24,16 @@ export default function DashboardPage() {
     refetchInterval: REFRESH_INTERVAL_MS,
   });
 
+  const { data: evaluations = [], isLoading: isLoadingEvaluations } = useQuery({
+    queryKey: ["message-evaluations"],
+    queryFn: getMessageEvaluations,
+    refetchInterval: REFRESH_INTERVAL_MS,
+  });
+
   const openCount = attendances.filter((a) => a.status === "open").length;
   const closedCount = attendances.filter((a) => a.status === "closed").length;
   const satisfaction = getSatisfactionPercentage(feedbacks);
+  const llmAccuracy = getPositiveRatePercentage(evaluations);
 
   return (
     <div className="p-4 sm:p-8">
@@ -34,7 +42,7 @@ export default function DashboardPage() {
         <p className="mt-0.5 text-sm text-slate-500">Visão geral dos atendimentos da plataforma</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Atendimentos em aberto"
           value={String(openCount)}
@@ -52,6 +60,12 @@ export default function DashboardPage() {
           value={satisfaction === null ? "—" : `${satisfaction}%`}
           icon={Smile}
           isLoading={isLoadingFeedbacks}
+        />
+        <StatCard
+          label="Acurácia das respostas da LLM"
+          value={llmAccuracy === null ? "—" : `${llmAccuracy}%`}
+          icon={Bot}
+          isLoading={isLoadingEvaluations}
         />
       </div>
 
