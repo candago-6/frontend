@@ -24,6 +24,12 @@ export async function getMessageEvaluations(): Promise<MessageEvaluation[]> {
   return data;
 }
 
+export function getPositiveRatePercentage(evaluations: MessageEvaluation[]): number | null {
+  if (evaluations.length === 0) return null;
+  const positive = evaluations.filter((e) => e.rating === "positive").length;
+  return Math.round((positive / evaluations.length) * 100);
+}
+
 export async function evaluateMessage(messageId: number, rating: EvaluationRating): Promise<MessageEvaluation> {
   if (MOCK) {
     const existing = mockEvaluations.find((e) => e.message_id === messageId);
