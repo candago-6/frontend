@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { MessageSquareMore } from "lucide-react";
+import { CheckCircle2, MessageSquareMore } from "lucide-react";
 
 import { StatCard } from "@/components/dashboard/stat-card";
 import { getAttendances } from "@/services/atendimentos";
@@ -16,6 +16,7 @@ export default function DashboardPage() {
   });
 
   const openCount = attendances.filter((a) => a.status === "open").length;
+  const closedCount = attendances.filter((a) => a.status === "closed").length;
 
   return (
     <div className="p-8">
@@ -29,6 +30,12 @@ export default function DashboardPage() {
           label="Atendimentos em aberto"
           value={String(openCount)}
           icon={MessageSquareMore}
+          isLoading={isLoading}
+        />
+        <StatCard
+          label="Atendimentos concluídos"
+          value={String(closedCount)}
+          icon={CheckCircle2}
           isLoading={isLoading}
         />
       </div>
