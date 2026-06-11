@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Filter, Loader2, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -72,6 +72,13 @@ function ConversationHistoryDialog({
   onOpenChange: (v: boolean) => void;
 }) {
   const queryClient = useQueryClient();
+  const [showOnlyNegative, setShowOnlyNegative] = useState(false);
+  const [lastConversationId, setLastConversationId] = useState(conversation?.id);
+
+  if (conversation?.id !== lastConversationId) {
+    setLastConversationId(conversation?.id);
+    setShowOnlyNegative(false);
+  }
 
   const { data: messages = [], isLoading } = useQuery({
     queryKey: ["conversation-messages", conversation?.id],
@@ -94,6 +101,13 @@ function ConversationHistoryDialog({
     onError: () => toast.error("Erro ao registrar avaliação"),
   });
 
+  const visibleMessages = showOnlyNegative
+    ? messages.filter((message) => {
+        const evaluation = evaluations.find((e) => e.message_id === message.id);
+        return message.role === "bot" && evaluation?.rating === "negative";
+      })
+    : messages;
+
   return (
     <Dialog open={!!conversation} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
@@ -105,6 +119,20 @@ function ConversationHistoryDialog({
           </DialogDescription>
         </DialogHeader>
 
+        {!isLoading && messages.length > 0 && (
+          <div className="flex justify-end">
+            <Button
+              variant={showOnlyNegative ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowOnlyNegative((v) => !v)}
+              className="h-7 gap-1.5 text-xs"
+            >
+              <Filter className="h-3.5 w-3.5" />
+              Respostas mal avaliadas
+            </Button>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="flex items-center justify-center py-10">
             <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
@@ -113,9 +141,13 @@ function ConversationHistoryDialog({
           <p className="py-10 text-center text-sm text-slate-400">
             Nenhuma mensagem registrada para este atendimento
           </p>
+        ) : visibleMessages.length === 0 ? (
+          <p className="py-10 text-center text-sm text-slate-400">
+            Nenhuma resposta avaliada negativamente nesta conversa
+          </p>
         ) : (
           <div className="max-h-96 space-y-2 overflow-y-auto py-2">
-            {messages.map((message) => {
+            {visibleMessages.map((message) => {
               const isUser = message.role === "user";
               const isBot = message.role === "bot";
               const evaluation = evaluations.find((e) => e.message_id === message.id);

@@ -1,4 +1,5 @@
 import api from "./api";
+import type { TrendPoint } from "@/types";
 
 const MOCK = process.env.NEXT_PUBLIC_MOCK_AUTH === "true";
 
@@ -28,6 +29,20 @@ export function getPositiveRatePercentage(evaluations: MessageEvaluation[]): num
   if (evaluations.length === 0) return null;
   const positive = evaluations.filter((e) => e.rating === "positive").length;
   return Math.round((positive / evaluations.length) * 100);
+}
+
+export function getPositiveRateTrend(evaluations: MessageEvaluation[]): TrendPoint[] {
+  const byDate = new Map<string, { positive: number; total: number }>();
+  for (const e of evaluations) {
+    const date = e.created_at.slice(0, 10);
+    const entry = byDate.get(date) ?? { positive: 0, total: 0 };
+    entry.total += 1;
+    if (e.rating === "positive") entry.positive += 1;
+    byDate.set(date, entry);
+  }
+  return Array.from(byDate.entries())
+    .map(([date, { positive, total }]) => ({ date, value: Math.round((positive / total) * 100) }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 export async function evaluateMessage(messageId: number, rating: EvaluationRating): Promise<MessageEvaluation> {
