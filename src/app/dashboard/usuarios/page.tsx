@@ -56,14 +56,12 @@ import type { User, Role } from "@/types";
 // --- Constants ---
 
 const ROLE_LABELS: Record<Role, string> = {
-  gestor_gerencia: "Gestor Gerência",
-  gestor_analista: "Gestor Analista",
+  gestor: "Gestor",
   analista: "Analista",
 };
 
 const ROLE_BADGE_CLASS: Record<Role, string> = {
-  gestor_gerencia: "bg-purple-50 text-purple-700 border-purple-200",
-  gestor_analista: "bg-blue-50 text-blue-700 border-blue-200",
+  gestor: "bg-purple-50 text-purple-700 border-purple-200",
   analista: "bg-green-50 text-green-700 border-green-200",
 };
 
@@ -72,7 +70,7 @@ const ROLE_BADGE_CLASS: Record<Role, string> = {
 const baseFields = {
   name: z.string().min(2, "Nome deve ter ao menos 2 caracteres"),
   email: z.string().email("E-mail inválido"),
-  role: z.enum(["gestor_analista", "gestor_gerencia", "analista"] as const, {
+  role: z.enum(["gestor", "analista"] as const, {
     error: "Selecione um cargo",
   }),
 };
@@ -170,8 +168,7 @@ function CreateUserDialog({
                       <SelectValue placeholder="Selecione um cargo" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="gestor_gerencia">Gestor Gerência</SelectItem>
-                      <SelectItem value="gestor_analista">Gestor Analista</SelectItem>
+                      <SelectItem value="gestor">Gestor</SelectItem>
                       <SelectItem value="analista">Analista</SelectItem>
                     </SelectContent>
                   </Select>
@@ -268,8 +265,7 @@ function EditUserDialog({
                       <SelectValue placeholder="Selecione um cargo" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="gestor_gerencia">Gestor Gerência</SelectItem>
-                      <SelectItem value="gestor_analista">Gestor Analista</SelectItem>
+                      <SelectItem value="gestor">Gestor</SelectItem>
                       <SelectItem value="analista">Analista</SelectItem>
                     </SelectContent>
                   </Select>
