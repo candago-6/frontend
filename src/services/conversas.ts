@@ -8,6 +8,7 @@ interface ConversationDTO {
   protocol: string;
   status: string;
   created_at: string;
+  assigned_admin_id?: string | null;
 }
 
 interface ClienteDTO {
@@ -33,6 +34,7 @@ export interface ConversationSummary {
   clientName: string;
   clientPhone: string;
   clientCpf: string;
+  assignedAdminId: string | null;
 }
 
 export interface ConversationMessage {
@@ -75,6 +77,7 @@ function toSummary(conversation: ConversationDTO, clientes: ClienteDTO[]): Conve
     clientName: cliente?.name ?? "—",
     clientPhone: cliente?.phone ?? "—",
     clientCpf: cliente?.cpf ?? "",
+    assignedAdminId: conversation.assigned_admin_id ?? null,
   };
 }
 
@@ -105,4 +108,42 @@ export async function getConversationMessages(conversationId: number): Promise<C
     .filter((m) => m.conversation_id === conversationId)
     .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
     .map(({ id, role, content, timestamp }) => ({ id, role, content, timestamp }));
+}
+
+export async function takeoverConversation(conversationId: number): Promise<void> {
+  if (MOCK) {
+    const conv = mockConversations.find((c) => c.id === conversationId);
+    if (conv) {
+      conv.status = "human_handover";
+      conv.assigned_admin_id = "1";
+    }
+    return;
+  }
+  await api.post(`/api/v1/conversations/${conversationId}/takeover`);
+}
+
+export async function sendAgentMessage(conversationId: number, content: string): Promise<void> {
+  if (MOCK) {
+    mockMessages.push({
+      id: Date.now(),
+      conversation_id: conversationId,
+      role: "agent",
+      content,
+      timestamp: new Date().toISOString(),
+    });
+    return;
+  }
+  await api.post(`/api/v1/conversations/${conversationId}/agent-message`, { content });
+}
+
+export async function releaseConversation(conversationId: number, toBot = false): Promise<void> {
+  if (MOCK) {
+    const conv = mockConversations.find((c) => c.id === conversationId);
+    if (conv) {
+      conv.status = toBot ? "open" : "closed";
+      conv.assigned_admin_id = null;
+    }
+    return;
+  }
+  await api.post(`/api/v1/conversations/${conversationId}/release?to_bot=${toBot}`);
 }
