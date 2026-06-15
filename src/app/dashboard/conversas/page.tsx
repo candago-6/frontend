@@ -113,6 +113,7 @@ function ConversationHistoryDialog({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isWaiting = conversation?.status === "waiting_human";
+  const isOpen = conversation?.status === "open";
   const isHandover = conversation?.status === "human_handover";
   const isLive = isWaiting || isHandover;
   const assignee = conversation?.assignedAdminId ?? null;
@@ -213,10 +214,17 @@ function ConversationHistoryDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {isWaiting && (
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
-            <p className="text-sm text-red-700">
-              O cliente está aguardando um atendente humano.
+        {(isWaiting || isOpen) && (
+          <div
+            className={cn(
+              "flex items-center justify-between gap-3 rounded-lg border px-3 py-2",
+              isWaiting ? "border-red-200 bg-red-50" : "border-blue-200 bg-blue-50"
+            )}
+          >
+            <p className={cn("text-sm", isWaiting ? "text-red-700" : "text-blue-700")}>
+              {isWaiting
+                ? "O cliente está aguardando um atendente humano."
+                : "Atendimento em andamento com o bot."}
             </p>
             <Button
               size="sm"
