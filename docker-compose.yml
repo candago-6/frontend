@@ -1,0 +1,14 @@
+services:
+  frontend:
+    container_name: assistente_frontend
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # O bundle é servido ao navegador, então a URL da API precisa ser
+      # alcançável a partir da máquina do usuário — não do container.
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8002}
+        NEXT_PUBLIC_MOCK_AUTH: ${NEXT_PUBLIC_MOCK_AUTH:-false}
+    ports:
+      - "3000:3000"
