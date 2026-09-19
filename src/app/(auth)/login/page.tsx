@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/form";
 
 import { login } from "@/services/auth";
-import { useAuthStore } from "@/store/auth";
+import { useAuthHydrated, useAuthStore } from "@/store/auth";
 
 const schema = z.object({
   email: z.string().email("E-mail inválido"),
@@ -31,7 +31,14 @@ type FormValues = z.infer<typeof schema>;
 export default function LoginPage() {
   const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
+  const token = useAuthStore((s) => s.token);
+  const hydrated = useAuthHydrated();
   const [serverError, setServerError] = useState<string | null>(null);
+
+  // Só esta aba conta: outra aba logada não deve pular o formulário aqui.
+  useEffect(() => {
+    if (hydrated && token) router.replace("/dashboard");
+  }, [hydrated, token, router]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -43,7 +50,6 @@ export default function LoginPage() {
     try {
       const { token, user } = await login(values);
       setAuth(token, user);
-      document.cookie = `token=${token}; path=/; max-age=${60 * 60 * 8}`;
       router.push("/dashboard");
     } catch {
       setServerError("E-mail ou senha inválidos.");

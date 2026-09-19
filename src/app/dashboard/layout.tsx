@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Scale, LayoutDashboard, Users, LogOut, MessageSquare, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/store/auth";
+import { useAuthHydrated, useAuthStore } from "@/store/auth";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true, roles: ["gestor", "analista"] },
@@ -18,8 +18,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const token = useAuthStore((s) => s.token);
   const logout = useAuthStore((s) => s.logout);
+  const hydrated = useAuthHydrated();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Substitui o antigo gate do middleware, que era por cookie (compartilhado
+  // entre abas). A sessão real sempre foi o Bearer token guardado aqui.
+  useEffect(() => {
+    if (hydrated && !token) router.replace("/login");
+  }, [hydrated, token, router]);
 
   useEffect(() => {
     if (user?.role === "analista" && pathname.startsWith("/dashboard/usuarios")) {
@@ -29,9 +37,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   function handleLogout() {
     logout();
-    document.cookie = "token=; path=/; max-age=0";
     router.push("/login");
   }
+
+  // Antes da hidratação o token ainda é desconhecido; renderizar o painel aqui
+  // causaria mismatch com o HTML do servidor e um flash de conteúdo protegido.
+  if (!hydrated || !token) return null;
 
   return (
     <div className="flex h-screen bg-slate-50">
