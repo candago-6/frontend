@@ -10,5 +10,8 @@ services:
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8002}
         NEXT_PUBLIC_MOCK_AUTH: ${NEXT_PUBLIC_MOCK_AUTH:-false}
+        # Precisa ser o mesmo ADMIN_EMAIL do compose do backend: e a conta que ve
+        # a pagina de Conexao. Só controla o menu; quem barra e o backend.
+        NEXT_PUBLIC_SUPER_ADMIN_EMAIL: ${NEXT_PUBLIC_SUPER_ADMIN_EMAIL:-admin@procon.sp.gov.br}
     ports:
       - "3000:3000"
