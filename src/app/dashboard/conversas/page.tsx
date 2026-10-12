@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  Eye,
+  EyeOff,
   Filter,
   Headset,
   Loader2,
@@ -88,6 +90,25 @@ function maskCpf(cpf: string): string {
   return `***.***.${digits.slice(6, 9)}-${digits.slice(9)}`;
 }
 
+function maskName(name: string): string {
+  const parts = name.split(/\s+/);
+  // Only the last name is censored — a single-word name has nothing to hide behind.
+  if (parts.length < 2) return name;
+  const last = parts[parts.length - 1];
+  const masked = last.length > 1 ? `${last[0]}${"*".repeat(last.length - 1)}` : last;
+  return [...parts.slice(0, -1), masked].join(" ");
+}
+
+function maskPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  // Keeps the placeholder ("—") and anything too short to split intact/blank.
+  if (!digits) return phone;
+  if (digits.length < 6) return "*".repeat(digits.length);
+  // WhatsApp sends 55 + DDD + 8/9 digits — keep the area code and the last 4.
+  const national = digits.startsWith("55") && digits.length > 10 ? digits.slice(2) : digits;
+  return `(${national.slice(0, 2)}) ${"*".repeat(national.length - 6)}-${national.slice(-4)}`;
+}
+
 function formatDate(value: string): string {
   return new Date(value).toLocaleString("pt-BR", {
     day: "2-digit",
@@ -100,9 +121,11 @@ function formatDate(value: string): string {
 
 function ConversationHistoryDialog({
   conversation,
+  revealed,
   onOpenChange,
 }: {
   conversation: ConversationSummary | null;
+  revealed: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
   const queryClient = useQueryClient();
@@ -209,7 +232,8 @@ function ConversationHistoryDialog({
         <DialogHeader>
           <DialogTitle>{conversation?.protocol}</DialogTitle>
           <DialogDescription className="break-words">
-            {conversation?.clientName} · {conversation?.clientPhone}
+            {revealed ? conversation?.clientName : maskName(conversation?.clientName ?? "")} ·{" "}
+            {revealed ? conversation?.clientPhone : maskPhone(conversation?.clientPhone ?? "")}
             {maskedCpf ? ` · CPF ${maskedCpf}` : ""}
           </DialogDescription>
         </DialogHeader>
@@ -394,6 +418,8 @@ function ConversationHistoryDialog({
 
 export default function ConversasPage() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  // Client data starts censored on every page load — revealing is a deliberate click.
+  const [revealed, setRevealed] = useState(false);
 
   const { data: conversations = [], isLoading } = useQuery({
     queryKey: ["conversations-summary"],
@@ -412,11 +438,26 @@ export default function ConversasPage() {
 
   return (
     <div className="p-4 sm:p-8">
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-slate-900">Conversas</h1>
-        <p className="mt-0.5 text-sm text-slate-500">
-          Histórico dos atendimentos realizados pelo chatbot
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-slate-900">Conversas</h1>
+          <p className="mt-0.5 text-sm text-slate-500">
+            Histórico dos atendimentos realizados pelo chatbot
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setRevealed((v) => !v)}
+          aria-pressed={revealed}
+          title={revealed ? "Ocultar dados do cliente" : "Exibir dados do cliente"}
+          className="text-slate-500 hover:text-slate-900"
+        >
+          {revealed ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          <span className="sr-only">
+            {revealed ? "Ocultar dados do cliente" : "Exibir dados do cliente"}
+          </span>
+        </Button>
       </div>
 
       {waitingCount > 0 && (
@@ -462,8 +503,12 @@ export default function ConversasPage() {
                       className={cn("border-slate-100", needsHuman && "bg-red-50/40")}
                     >
                       <TableCell className="font-medium text-slate-900">{conversation.protocol}</TableCell>
-                      <TableCell className="text-slate-600">{conversation.clientName}</TableCell>
-                      <TableCell className="text-slate-600">{conversation.clientPhone}</TableCell>
+                      <TableCell className="text-slate-600">
+                        {revealed ? conversation.clientName : maskName(conversation.clientName)}
+                      </TableCell>
+                      <TableCell className="text-slate-600 tabular-nums">
+                        {revealed ? conversation.clientPhone : maskPhone(conversation.clientPhone)}
+                      </TableCell>
                       <TableCell>
                         <Badge
                           variant="outline"
@@ -501,6 +546,7 @@ export default function ConversasPage() {
 
       <ConversationHistoryDialog
         conversation={selected}
+        revealed={revealed}
         onOpenChange={(v) => { if (!v) setSelectedId(null); }}
       />
     </div>
